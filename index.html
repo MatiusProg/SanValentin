@@ -45,7 +45,7 @@
             border-radius: 25px;
             margin: 8px;
             cursor: pointer;
-            transition: transform 0.3s ease;
+            transition: all 0.3s ease;
             min-width: 100px;
         }
 
@@ -53,7 +53,8 @@
             background-color: #ff4d6d;
             color: white;
             position: static;
-            transition: all 0.3s ease;
+            transform-origin: center;
+            box-shadow: 0 4px 15px rgba(255,77,109,0.3);
         }
 
         #noBtn {
@@ -63,6 +64,7 @@
             transition: all 0.5s ease;
             touch-action: none;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transform-origin: center;
         }
 
         .balloon {
@@ -71,6 +73,9 @@
             height: 60px;
             border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
             animation: float 8s infinite linear;
+            filter: saturate(130%);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: rotate(var(--tilt));
         }
 
         .balloon::after {
@@ -81,6 +86,7 @@
             transform: translate(-50%, -50%);
             color: white;
             font-size: 20px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
         }
 
         .balloon::before {
@@ -92,6 +98,7 @@
             height: 20px;
             background-color: #fff;
             transform: translateX(-50%);
+            filter: brightness(110%);
         }
 
         @keyframes float {
@@ -101,9 +108,10 @@
             }
             50% {
                 opacity: 1;
+                transform: translateY(50vh) rotate(5deg);
             }
             100% {
-                transform: translateY(-100vh) rotate(360deg);
+                transform: translateY(-100vh) rotate(0deg);
                 opacity: 0;
             }
         }
@@ -166,13 +174,21 @@
         const noBtn = document.getElementById('noBtn');
         const yesBtn = document.getElementById('yesBtn');
         const message = document.getElementById('message');
-        const balloonColors = ['#ff99cc', '#ff6666', '#cc99ff', '#ff94ba', '#ff4d4d'];
-        let isMobile = /Mobi|Android/i.test(navigator.userAgent);
+        const balloonColors = [
+            'hsl(340, 100%, 75%)',
+            'hsl(0, 100%, 70%)',
+            'hsl(300, 100%, 70%)',
+            'hsl(350, 100%, 70%)',
+            'hsl(30, 100%, 65%)'
+        ];
+        let attempts = 0;
+        let noScale = 1;
 
         function createBalloon() {
             const balloon = document.createElement('div');
             balloon.className = 'balloon';
             balloon.style.backgroundColor = balloonColors[Math.floor(Math.random() * balloonColors.length)];
+            balloon.style.setProperty('--tilt', `${Math.random() * 20 - 10}deg`);
             balloon.style.left = Math.random() * 100 + 'vw';
             balloon.style.animationDuration = (Math.random() * 3 + 5) + 's';
             document.body.appendChild(balloon);
@@ -180,25 +196,36 @@
             setTimeout(() => balloon.remove(), 8000);
         }
 
-        // Create balloons
-        setInterval(createBalloon, 1500);
+        setInterval(createBalloon, 1200);
 
-        // Improved button movement logic
         function moveButton(event) {
+            // Move No button
             const buttonRect = noBtn.getBoundingClientRect();
-            const maxX = window.innerWidth - buttonRect.width - 20;
-            const maxY = window.innerHeight - buttonRect.height - 20;
+            const maxX = window.innerWidth - buttonRect.width - 30;
+            const maxY = window.innerHeight - buttonRect.height - 30;
             
-            const x = Math.min(Math.max(Math.random() * maxX, 20), maxX);
-            const y = Math.min(Math.max(Math.random() * maxY, 20), maxY);
+            const x = Math.min(Math.max(Math.random() * maxX, 30), maxX);
+            const y = Math.min(Math.max(Math.random() * maxY, 30), maxY);
             
             noBtn.style.left = x + 'px';
             noBtn.style.top = y + 'px';
             
+            // Scale effects
+            attempts++;
+            
+            // Grow Sí button dramatically
+            const yesScale = 1 + (attempts * 0.7);
+            yesBtn.style.transform = `scale(${yesScale})`;
+            yesBtn.style.backgroundColor = `hsl(${345 - (attempts * 8)}, 100%, 60%)`;
+            
+            // Shrink No button
+            noScale = Math.max(0.3, noScale - 0.15);
+            noBtn.style.transform = `scale(${noScale})`;
+            noBtn.style.opacity = 1 - (attempts * 0.05);
+            
             if(event.cancelable) event.preventDefault();
         }
 
-        // Event listeners
         noBtn.addEventListener('mouseover', moveButton);
         noBtn.addEventListener('touchstart', function(e) {
             moveButton(e);
@@ -210,24 +237,25 @@
             yesBtn.style.display = 'none';
             noBtn.style.display = 'none';
             
-            // Create celebration balloons
-            for(let i = 0; i < 20; i++) {
-                setTimeout(() => createBalloon(), i * 100);
+            for(let i = 0; i < 25; i++) {
+                setTimeout(() => {
+                    createBalloon();
+                    if(i % 3 === 0) createBalloon();
+                }, i * 80);
             }
         });
 
-        // Window resize handler
         window.addEventListener('resize', () => {
             const currentX = parseFloat(noBtn.style.left) || 0;
             const currentY = parseFloat(noBtn.style.top) || 0;
-            const maxX = window.innerWidth - noBtn.offsetWidth - 20;
-            const maxY = window.innerHeight - noBtn.offsetHeight - 20;
+            const maxX = window.innerWidth - noBtn.offsetWidth - 30;
+            const maxY = window.innerHeight - noBtn.offsetHeight - 30;
             
-            noBtn.style.left = Math.min(Math.max(currentX, 20), maxX) + 'px';
-            noBtn.style.top = Math.min(Math.max(currentY, 20), maxY) + 'px';
+            noBtn.style.left = Math.min(Math.max(currentX, 30), maxX) + 'px';
+            noBtn.style.top = Math.min(Math.max(currentY, 30), maxY) + 'px';
         });
 
-        // Initial button position
+        // Initial position
         noBtn.style.left = '50%';
         noBtn.style.top = '50%';
     </script>
